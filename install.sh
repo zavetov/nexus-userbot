@@ -62,10 +62,12 @@ TEXTS = {
         "current_prefix": "[📷] Текущий префикс: `{}`\nИспользование: `{}prefix <новый_префикс>`",
         "prefix_changed": "[✅] Префикс изменен!\n\nСтарый: `{}`\nНовый: `{}`",
         "help_title": "[🤖] NEXUS USERBOT {}\n[👑] Владелец: {}",
-        "commands": "[📌] КОМАНДЫ:\n\n[📷] `{}info` → Информация о боте\n[🏓] `{}ping` → Проверка задержки\n[✨] `{}nexus` → Фото с информацией\n[📦] `{}modules` → Список модулей\n[📥] `{}install` → Установка модуля (ссылка или ответ на файл)\n[🔄] `{}reload` → Перезагрузка модулей\n[⚙️] `{}prefix` → Смена префикса\n[🌐] `{}language` → Смена языка (ru/en)\n[❓] `{}help` → Это меню",
+        "commands": "[📌] КОМАНДЫ:\n\n[📷] `{}info` → Информация о боте\n[🏓] `{}ping` → Проверка задержки\n[✨] `{}nexus` → Фото с информацией\n[📦] `{}modules` → Список модулей\n[📥] `{}install` → Установка модуля\n[🔄] `{}reload` → Перезагрузка модулей\n[⚙️] `{}prefix` → Смена префикса\n[🌐] `{}language` → Смена языка\n[❓] `{}help` → Это меню",
         "lang_changed": "[✅] Язык изменен на {}",
         "lang_usage": "[❌] Использование: `{}language ru/en`",
-        "file_saved": "[✅] Файл сохранен: `{}`"
+        "photo_set": "[✅] Фото для .{} установлено!\nТеперь все пользователи видят его.",
+        "photo_usage": "[❌] Использование: `.sendphoto <info|nexus|help>` (ответь на фото)",
+        "photo_only_owner": "[❌] Только владелец может менять фото!"
     },
     "en": {
         "ping": "[🏓] Pong...",
@@ -91,10 +93,12 @@ TEXTS = {
         "current_prefix": "[📷] Current prefix: `{}`\nUsage: `{}prefix <new_prefix>`",
         "prefix_changed": "[✅] Prefix changed!\n\nOld: `{}`\nNew: `{}`",
         "help_title": "[🤖] NEXUS USERBOT {}\n[👑] Owner: {}",
-        "commands": "[📌] COMMANDS:\n\n[📷] `{}info` → Bot information\n[🏓] `{}ping` → Check ping\n[✨] `{}nexus` → Photo with info\n[📦] `{}modules` → List modules\n[📥] `{}install` → Install module (url or reply to file)\n[🔄] `{}reload` → Reload modules\n[⚙️] `{}prefix` → Change prefix\n[🌐] `{}language` → Change language (ru/en)\n[❓] `{}help` → This menu",
+        "commands": "[📌] COMMANDS:\n\n[📷] `{}info` → Bot information\n[🏓] `{}ping` → Check ping\n[✨] `{}nexus` → Photo with info\n[📦] `{}modules` → List modules\n[📥] `{}install` → Install module\n[🔄] `{}reload` → Reload modules\n[⚙️] `{}prefix` → Change prefix\n[🌐] `{}language` → Change language\n[❓] `{}help` → This menu",
         "lang_changed": "[✅] Language changed to {}",
         "lang_usage": "[❌] Usage: `{}language ru/en`",
-        "file_saved": "[✅] File saved: `{}`"
+        "photo_set": "[✅] Photo for .{} set!\nNow all users will see it.",
+        "photo_usage": "[❌] Usage: `.sendphoto <info|nexus|help>` (reply to photo)",
+        "photo_only_owner": "[❌] Only owner can change photo!"
     }
 }
 
@@ -133,22 +137,15 @@ def get_uptime():
     return f"{days}d {hours}h {minutes}m"
 
 def banner():
-    print(f"""
-
-
-
-
-
-
-\033[95m  ███╗   ██╗███████╗██╗  ██╗██╗   ██╗███████╗
-  ████╗  ██║██╔════╝╚██╗██╔╝██║   ██║██╔════╝
-  ██╔██╗ ██║█████╗   ╚███╔╝ ██║   ██║███████╗
-  ██║╚██╗██║██╔══╝   ██╔██╗ ██║   ██║╚════██║
-  ██║ ╚████║███████╗██╔╝ ██╗╚██████╔╝███████║
-  ╚═╝  ╚═══╝╚══════╝╚═╝  ╚═╝ ╚═════╝ ╚══════╝
-\033[95m         NEXUS USERBOT {VERSION}
-\033[95m         @nopxcket  |  @shitlame\033[0m
-""")
+    print("\n" * 100)
+    print("\033[95m  ███╗   ██╗███████╗██╗  ██╗██╗   ██╗███████╗")
+    print("  ████╗  ██║██╔════╝╚██╗██╔╝██║   ██║██╔════╝")
+    print("  ██╔██╗ ██║█████╗   ╚███╔╝ ██║   ██║███████╗")
+    print("  ██║╚██╗██║██╔══╝   ██╔██╗ ██║   ██║╚════██║")
+    print("  ██║ ╚████║███████╗██╔╝ ██╗╚██████╔╝███████║")
+    print("  ╚═╝  ╚═══╝╚══════╝╚═╝  ╚═╝ ╚═════╝ ╚══════╝")
+    print("\033[95m         NEXUS USERBOT {VERSION}")
+    print("\033[95m         @nopxcket  |  @shitlame\033[0m")
 
 async def ping(e, a):
     s = time.time()
@@ -210,7 +207,6 @@ async def modules(e, a):
     await e.edit(text)
 
 async def install(e, a):
-    # Если есть аргумент (ссылка)
     if a:
         url = a[0]
         msg = await e.edit(t("installing"))
@@ -241,7 +237,6 @@ async def install(e, a):
             await msg.edit(f"[❌] {ex}")
         return
     
-    # Если ответ на файл
     if e.is_reply:
         reply = await e.get_reply_message()
         if reply.file and reply.file.name and reply.file.name.endswith('.py'):
@@ -323,6 +318,29 @@ async def help_cmd(e, a):
     else:
         await e.edit(text)
 
+async def sendphoto_cmd(e, a):
+    if e.sender_id != OWNER_ID:
+        await e.edit(t("photo_only_owner"))
+        return
+    if not a:
+        await e.edit(t("photo_usage"))
+        return
+    cmd_type = a[0].lower()
+    if cmd_type not in ["info", "nexus", "help"]:
+        await e.edit("[❌] Доступные типы: info, nexus, help")
+        return
+    if not e.is_reply:
+        await e.edit("[❌] Ответь на фото командой!")
+        return
+    reply = await e.get_reply_message()
+    if not reply.photo:
+        await e.edit("[❌] Ответь именно на фото!")
+        return
+    msg = await e.edit(f"[📸] Сохраняю фото для .{cmd_type}...")
+    photo_path = PHOTOS_DIR / f"{cmd_type}.jpg"
+    await client.download_media(reply.photo, photo_path)
+    await msg.edit(t("photo_set", cmd_type))
+
 cmds['ping'] = ping
 cmds['info'] = info
 cmds['nexus'] = nexus
@@ -332,6 +350,7 @@ cmds['reload'] = reload
 cmds['prefix'] = prefix_cmd
 cmds['language'] = language_cmd
 cmds['help'] = help_cmd
+cmds['sendphoto'] = sendphoto_cmd
 
 async def handler(e):
     t = e.raw_text
@@ -384,9 +403,7 @@ if __name__ == "__main__":
         
         if not API_ID or not API_HASH:
             print("[!] No API keys!")
-            print("[!] Create .env file:")
-            print("    echo 'API_ID=12345' > .env")
-            print("    echo 'API_HASH=your_hash' >> .env")
+            print("[!] Create .env file")
             sys.exit(1)
         
         print("[*] Connecting...")
@@ -406,5 +423,4 @@ if __name__ == "__main__":
         print(f"[✗] {e}")
 EOF
 
-echo ""
 python3 main.py
