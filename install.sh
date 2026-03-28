@@ -1,4 +1,4 @@
-cd ~/nexus-userbot && mkdir -p photos && cat > main.py << 'EOF'
+cd ~/nexus-userbot && cat > main.py << 'EOF'
 #!/usr/bin/env python3
 import asyncio
 import importlib
@@ -37,7 +37,6 @@ start = time.time()
 current_prefix = PREFIX
 current_lang = "ru"
 
-# Тексты на языках
 TEXTS = {
     "ru": {
         "ping": "[🏓] Понг...",
@@ -53,8 +52,8 @@ TEXTS = {
         "nexus_title": "[🤖] NEXUS {}",
         "no_modules": "[📦] Нет загруженных модулей",
         "modules": "[📦] МОДУЛИ:\n\n",
-        "install_usage": "[❌] Использование: `{}install <url>`",
-        "installing": "[📥] Установка...\n`{}`",
+        "install_usage": "[❌] Использование: `{}install <url>` или ответь на .py файл",
+        "installing": "[📥] Установка...",
         "installed": "[✅] Установлен: `{}`",
         "error_http": "[❌] Ошибка: HTTP {}",
         "reloading": "[🔄] Перезагрузка модулей...",
@@ -63,11 +62,10 @@ TEXTS = {
         "current_prefix": "[📷] Текущий префикс: `{}`\nИспользование: `{}prefix <новый_префикс>`",
         "prefix_changed": "[✅] Префикс изменен!\n\nСтарый: `{}`\nНовый: `{}`",
         "help_title": "[🤖] NEXUS USERBOT {}\n[👑] Владелец: {}",
-        "commands": "[📌] КОМАНДЫ:\n\n[📷] `{}info` → Информация о боте\n[🏓] `{}ping` → Проверка задержки\n[✨] `{}nexus` → Фото с информацией\n[📦] `{}modules` → Список модулей\n[📥] `{}install` → Установка модуля\n[🔄] `{}reload` → Перезагрузка модулей\n[⚙️] `{}prefix` → Смена префикса\n[🌐] `{}language` → Смена языка (ru/en)\n[❓] `{}help` → Это меню",
+        "commands": "[📌] КОМАНДЫ:\n\n[📷] `{}info` → Информация о боте\n[🏓] `{}ping` → Проверка задержки\n[✨] `{}nexus` → Фото с информацией\n[📦] `{}modules` → Список модулей\n[📥] `{}install` → Установка модуля (ссылка или ответ на файл)\n[🔄] `{}reload` → Перезагрузка модулей\n[⚙️] `{}prefix` → Смена префикса\n[🌐] `{}language` → Смена языка (ru/en)\n[❓] `{}help` → Это меню",
         "lang_changed": "[✅] Язык изменен на {}",
         "lang_usage": "[❌] Использование: `{}language ru/en`",
-        "photo_changed": "[✅] Фото для {} обновлено!",
-        "photo_usage": "[❌] Использование: `{}setphoto <команда> <url>`\nДоступно: info, nexus, help"
+        "file_saved": "[✅] Файл сохранен: `{}`"
     },
     "en": {
         "ping": "[🏓] Pong...",
@@ -83,8 +81,8 @@ TEXTS = {
         "nexus_title": "[🤖] NEXUS {}",
         "no_modules": "[📦] No modules loaded",
         "modules": "[📦] MODULES:\n\n",
-        "install_usage": "[❌] Usage: `{}install <url>`",
-        "installing": "[📥] Installing...\n`{}`",
+        "install_usage": "[❌] Usage: `{}install <url>` or reply to .py file",
+        "installing": "[📥] Installing...",
         "installed": "[✅] Installed: `{}`",
         "error_http": "[❌] Error: HTTP {}",
         "reloading": "[🔄] Reloading modules...",
@@ -93,11 +91,10 @@ TEXTS = {
         "current_prefix": "[📷] Current prefix: `{}`\nUsage: `{}prefix <new_prefix>`",
         "prefix_changed": "[✅] Prefix changed!\n\nOld: `{}`\nNew: `{}`",
         "help_title": "[🤖] NEXUS USERBOT {}\n[👑] Owner: {}",
-        "commands": "[📌] COMMANDS:\n\n[📷] `{}info` → Bot information\n[🏓] `{}ping` → Check ping\n[✨] `{}nexus` → Photo with info\n[📦] `{}modules` → List modules\n[📥] `{}install` → Install module\n[🔄] `{}reload` → Reload modules\n[⚙️] `{}prefix` → Change prefix\n[🌐] `{}language` → Change language (ru/en)\n[❓] `{}help` → This menu",
+        "commands": "[📌] COMMANDS:\n\n[📷] `{}info` → Bot information\n[🏓] `{}ping` → Check ping\n[✨] `{}nexus` → Photo with info\n[📦] `{}modules` → List modules\n[📥] `{}install` → Install module (url or reply to file)\n[🔄] `{}reload` → Reload modules\n[⚙️] `{}prefix` → Change prefix\n[🌐] `{}language` → Change language (ru/en)\n[❓] `{}help` → This menu",
         "lang_changed": "[✅] Language changed to {}",
         "lang_usage": "[❌] Usage: `{}language ru/en`",
-        "photo_changed": "[✅] Photo for {} updated!",
-        "photo_usage": "[❌] Usage: `{}setphoto <cmd> <url>`\nAvailable: info, nexus, help"
+        "file_saved": "[✅] File saved: `{}`"
     }
 }
 
@@ -105,7 +102,6 @@ def t(key, *args):
     text = TEXTS[current_lang].get(key, key)
     return text.format(*args) if args else text
 
-# Загрузка сохраненного префикса и языка
 if DATA_FILE.exists():
     try:
         with open(DATA_FILE, 'r') as f:
@@ -141,6 +137,9 @@ def banner():
 
 
 
+
+
+
 \033[95m  ███╗   ██╗███████╗██╗  ██╗██╗   ██╗███████╗
   ████╗  ██║██╔════╝╚██╗██╔╝██║   ██║██╔════╝
   ██╔██╗ ██║█████╗   ╚███╔╝ ██║   ██║███████╗
@@ -161,7 +160,6 @@ async def info(e, a):
     user = await e.get_sender()
     username = f"@{user.username}" if user.username else user.first_name
     uptime = get_uptime()
-    
     s = time.time()
     ping_real = int((time.time() - s) * 1000)
     
@@ -186,7 +184,6 @@ async def info(e, a):
 async def nexus(e, a):
     user = await e.get_sender()
     username = f"@{user.username}" if user.username else user.first_name
-    
     text = f"""
 {t("owner")}
 {t("you", username)}
@@ -213,37 +210,58 @@ async def modules(e, a):
     await e.edit(text)
 
 async def install(e, a):
-    if not a:
-        await e.edit(t("install_usage", current_prefix))
+    # Если есть аргумент (ссылка)
+    if a:
+        url = a[0]
+        msg = await e.edit(t("installing"))
+        try:
+            if "github.com" in url:
+                if "/blob/" in url:
+                    url = url.replace("github.com", "raw.githubusercontent.com").replace("/blob/", "/")
+                else:
+                    url = url.replace("github.com", "raw.githubusercontent.com")
+                    if not url.endswith(".py"):
+                        url = f"{url}/main/main.py"
+            
+            r = requests.get(url, timeout=30)
+            if r.status_code == 200:
+                p = MODS / f"{int(time.time())}_{url.split('/')[-1]}"
+                with open(p, 'w') as f: 
+                    f.write(r.text)
+                n = p.stem
+                s = importlib.util.spec_from_file_location(n, p)
+                mod = importlib.util.module_from_spec(s)
+                sys.modules[n] = mod
+                s.loader.exec_module(mod)
+                loaded[n] = {'t': 'native'}
+                await msg.edit(t("installed", n))
+            else:
+                await msg.edit(t("error_http", r.status_code))
+        except Exception as ex:
+            await msg.edit(f"[❌] {ex}")
         return
     
-    url = a[0]
-    msg = await e.edit(t("installing", url))
-    try:
-        if "github.com" in url:
-            if "/blob/" in url:
-                url = url.replace("github.com", "raw.githubusercontent.com").replace("/blob/", "/")
-            else:
-                url = url.replace("github.com", "raw.githubusercontent.com")
-                if not url.endswith(".py"):
-                    url = f"{url}/main/main.py"
-        
-        r = requests.get(url, timeout=30)
-        if r.status_code == 200:
-            p = MODS / f"{int(time.time())}_{url.split('/')[-1]}"
-            with open(p, 'w') as f: 
-                f.write(r.text)
-            n = p.stem
-            s = importlib.util.spec_from_file_location(n, p)
-            mod = importlib.util.module_from_spec(s)
-            sys.modules[n] = mod
-            s.loader.exec_module(mod)
-            loaded[n] = {'t': 'native'}
-            await msg.edit(t("installed", n))
+    # Если ответ на файл
+    if e.is_reply:
+        reply = await e.get_reply_message()
+        if reply.file and reply.file.name and reply.file.name.endswith('.py'):
+            msg = await e.edit(t("installing"))
+            try:
+                file_path = MODS / f"{int(time.time())}_{reply.file.name}"
+                await client.download_file(reply.media, file_path)
+                n = file_path.stem
+                s = importlib.util.spec_from_file_location(n, file_path)
+                mod = importlib.util.module_from_spec(s)
+                sys.modules[n] = mod
+                s.loader.exec_module(mod)
+                loaded[n] = {'t': 'native'}
+                await msg.edit(t("installed", n))
+            except Exception as ex:
+                await msg.edit(f"[❌] {ex}")
         else:
-            await msg.edit(t("error_http", r.status_code))
-    except Exception as ex:
-        await msg.edit(f"[❌] {ex}")
+            await e.edit(t("install_usage", current_prefix))
+    else:
+        await e.edit(t("install_usage", current_prefix))
 
 async def reload(e, a):
     msg = await e.edit(t("reloading"))
@@ -267,33 +285,26 @@ async def reload(e, a):
 
 async def prefix_cmd(e, a):
     global current_prefix
-    
     if e.sender_id != OWNER_ID:
         await e.edit(t("only_owner"))
         return
-    
     if not a:
         await e.edit(t("current_prefix", current_prefix, current_prefix))
         return
-    
     new_prefix = a[0]
     old_prefix = current_prefix
     current_prefix = new_prefix
     save_data()
-    
     await e.edit(t("prefix_changed", old_prefix, current_prefix))
 
 async def language_cmd(e, a):
     global current_lang
-    
     if e.sender_id != OWNER_ID:
         await e.edit("[❌] Only owner can change language!")
         return
-    
     if not a or a[0] not in ["ru", "en"]:
         await e.edit(t("lang_usage", current_prefix))
         return
-    
     current_lang = a[0]
     save_data()
     await e.edit(t("lang_changed", "🇷🇺 Русский" if current_lang == "ru" else "🇬🇧 English"))
@@ -301,7 +312,6 @@ async def language_cmd(e, a):
 async def help_cmd(e, a):
     user = await e.get_sender()
     username = f"@{user.username}" if user.username else user.first_name
-    
     text = t("help_title", VERSION, username) + "\n\n" + t("commands", 
         current_prefix, current_prefix, current_prefix, current_prefix, 
         current_prefix, current_prefix, current_prefix, current_prefix, current_prefix)
@@ -313,7 +323,6 @@ async def help_cmd(e, a):
     else:
         await e.edit(text)
 
-# Регистрация команд
 cmds['ping'] = ping
 cmds['info'] = info
 cmds['nexus'] = nexus
@@ -397,24 +406,5 @@ if __name__ == "__main__":
         print(f"[✗] {e}")
 EOF
 
-# СОЗДАЕМ ПАПКУ ДЛЯ ФОТО
-mkdir -p photos
-
 echo ""
-echo -e "\033[95m╔════════════════════════════════════════════════════════════╗"
-echo -e "║  📸 ДЛЯ ЗАГРУЗКИ ФОТО:                                         ║"
-echo -e "║                                                                 ║"
-echo -e "║  1. Положи фото в папку photos/ с именами:                     ║"
-echo -e "║     • info.jpg     — для команды .info                         ║"
-echo -e "║     • nexus.jpg    — для команды .nexus                        ║"
-echo -e "║     • help.jpg     — для команды .help                         ║"
-echo -e "║                                                                 ║"
-echo -e "║  2. ИЛИ скачай фото из интернета:                              ║"
-echo -e "║     wget -O photos/info.jpg \"https://telegra.ph/file/xxx.jpg\" ║"
-echo -e "║                                                                 ║"
-echo -e "║  3. После загрузки перезапусти бота:                           ║"
-echo -e "║     python3 main.py                                             ║"
-echo -e "╚════════════════════════════════════════════════════════════╝\033[0m"
-echo ""
-
 python3 main.py
