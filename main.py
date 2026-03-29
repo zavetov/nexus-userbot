@@ -23,7 +23,7 @@ SESSION = "nexus"
 NAME = "NEXUS"
 VERSION = "2.0.0"
 
-# АДМИНЫ
+# АДМИНЫ (только для смены префикса и фото)
 ADMINS = [7909649275, 7383593060]
 
 GROUP_LINK = "https://t.me/userbotnexus"
@@ -171,60 +171,42 @@ async def info(e, a):
     s = time.time()
     ping_real = int((time.time() - s) * 1000)
     
-    # HTML разметка как в Hikka
     text = f"""
-<strong>👑 Владелец:</strong> @nopxcket & @shitlame
-<strong>👤 Ты:</strong> {username}
-<strong>🤖 Версия:</strong> {VERSION}
-<hr>
-<strong>📷 Префикс:</strong> «{current_prefix}»
-<strong>🔄 Аптайм:</strong> {uptime}
-<strong>📊 Пинг:</strong> {ping_real} мс
-<strong>💻 Система:</strong> {platform.system()}
-<hr>
-<strong>🔗 <a href="{GROUP_LINK}">УСТАНОВИТЬ</a></strong>"""
+{t("you", username)}
+{t("version", VERSION)}
+
+{t("prefix", current_prefix)}
+{t("uptime", uptime)}
+{t("ping_stat", ping_real)}
+{t("system", platform.system())}
+
+{t("install_btn", GROUP_LINK)}"""
     
     photo_bytes = get_photo_bytes("info")
     if photo_bytes:
-        await client.send_file(
-            e.chat_id,
-            photo_bytes,
-            caption=text,
-            parse_mode='html',
-            force_document=False
-        )
+        await client.send_file(e.chat_id, photo_bytes, caption=text, parse_mode='markdown')
         await e.delete()
     else:
-        await e.edit(text, parse_mode='html')
+        await e.edit(text, parse_mode='markdown')
 
 async def nexus(e, a):
     user = await e.get_sender()
     username = f"@{user.username}" if user.username else user.first_name
-    
-    # HTML разметка как в Hikka
     text = f"""
-<strong>👑 Владелец:</strong> @nopxcket & @shitlame
-<strong>👤 Ты:</strong> {username}
-<strong>🤖 NEXUS {VERSION}</strong>
-<hr>
-<strong>📷 Префикс:</strong> «{current_prefix}»
-<strong>📦 Модулей:</strong> {len(loaded)}
-<strong>💻 Система:</strong> {platform.system()}
-<hr>
-<strong>🔗 <a href="{GROUP_LINK}">УСТАНОВИТЬ</a></strong>"""
+{t("owner")}
+{t("you", username)}
+{t("nexus_title", VERSION)}
+
+{t("prefix", current_prefix)}
+
+{t("install_btn", GROUP_LINK)}"""
     
     photo_bytes = get_photo_bytes("nexus")
     if photo_bytes:
-        await client.send_file(
-            e.chat_id,
-            photo_bytes,
-            caption=text,
-            parse_mode='html',
-            force_document=False
-        )
+        await client.send_file(e.chat_id, photo_bytes, caption=text, parse_mode='markdown')
         await e.delete()
     else:
-        await e.edit(text, parse_mode='html')
+        await e.edit(text, parse_mode='markdown')
 
 async def modules(e, a):
     if not loaded:
@@ -238,11 +220,9 @@ async def modules(e, a):
             text += f"   └ Команды: {cmds_list}\n"
     await e.edit(text)
 
+# ============ INSTALL - ДЛЯ ВСЕХ (УБРАНА ПРОВЕРКА НА АДМИНА) ============
 async def install(e, a):
-    if e.sender_id not in ADMINS:
-        await e.edit("[❌] Только админы могут устанавливать модули!")
-        return
-    
+    # Убрана проверка на админа! Теперь все могут устанавливать модули
     if a:
         url = a[0]
         msg = await e.edit(t("installing"))
@@ -384,46 +364,16 @@ async def sendphoto_cmd(e, a):
 async def help_cmd(e, a):
     user = await e.get_sender()
     username = f"@{user.username}" if user.username else user.first_name
-    
-    # HTML разметка как в Hikka
-    text = f"""
-<strong>🤖 NEXUS USERBOT {VERSION}</strong>
-<strong>👑 Владелец:</strong> {username}
-<hr>
-<strong>📌 КОМАНДЫ:</strong>
-<br>
-📷 <code>{current_prefix}info</code> → Информация о боте
-<br>
-🏓 <code>{current_prefix}ping</code> → Проверка задержки
-<br>
-✨ <code>{current_prefix}nexus</code> → Фото с информацией
-<br>
-📦 <code>{current_prefix}modules</code> → Список модулей
-<br>
-📥 <code>{current_prefix}install</code> → Установка модуля
-<br>
-🔄 <code>{current_prefix}reload</code> → Перезагрузка модулей
-<br>
-⚙️ <code>{current_prefix}prefix</code> → Смена префикса
-<br>
-🌐 <code>{current_prefix}language</code> → Смена языка (ru/en)
-<br>
-❓ <code>{current_prefix}help</code> → Это меню
-<hr>
-<strong>🤖 Bot by:</strong> @nopxcket & @shitlame"""
+    text = t("help_title", VERSION, username) + "\n\n" + t("commands", 
+        current_prefix, current_prefix, current_prefix, current_prefix, 
+        current_prefix, current_prefix, current_prefix, current_prefix, current_prefix)
     
     photo_bytes = get_photo_bytes("help")
     if photo_bytes:
-        await client.send_file(
-            e.chat_id,
-            photo_bytes,
-            caption=text,
-            parse_mode='html',
-            force_document=False
-        )
+        await client.send_file(e.chat_id, photo_bytes, caption=text)
         await e.delete()
     else:
-        await e.edit(text, parse_mode='html')
+        await e.edit(text)
 
 # ==================== РЕГИСТРАЦИЯ КОМАНД ====================
 cmds['ping'] = ping
@@ -516,9 +466,9 @@ if __name__ == "__main__":
 EOF
 
 echo ""
-echo -e "\033[95m✅ КОД ОБНОВЛЕН! HTML-РАЗМЕТКА КАК В HIKKA\033[0m"
-echo -e "\033[95m✅ Команда .sendphoto ТОЛЬКО ДЛЯ АДМИНОВ\033[0m"
-echo -e "\033[95m✅ АДМИНЫ: @nopxcket и ID 7383593060\033[0m"
+echo -e "\033[95m✅ КОД ОБНОВЛЕН!\033[0m"
+echo -e "\033[95m✅ МОДУЛИ МОГУТ УСТАНАВЛИВАТЬ ВСЕ ПОЛЬЗОВАТЕЛИ\033[0m"
+echo -e "\033[95m✅ АДМИНЫ: @nopxcket и ID 7383593060 (только для смены префикса и фото)\033[0m"
 echo ""
 echo -e "\033[95m🚀 ЗАПУСКАЙ: python main.py\033[0m"
 echo ""
