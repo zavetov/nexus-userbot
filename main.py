@@ -1,4 +1,4 @@
-cd ~/nexus-userbot && rm -f main.py && cat > main.py << 'EOF'
+cat > main.py << 'EOF'
 #!/usr/bin/env python3
 import asyncio
 import sys
@@ -422,9 +422,3 @@ if __name__ == "__main__":
     except Exception as e:
         print(f"[✗] {e}")
 EOF
-
-echo ""
-echo -e "\033[92m✅ main.py ИСПРАВЛЕН! ТЕПЕРЬ ЗАПУСКАЙ:\033[0m"
-echo ""
-
-python main.py
