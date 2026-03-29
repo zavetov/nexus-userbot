@@ -13,37 +13,16 @@ echo ""
 
 cd ~
 rm -rf nexus-userbot
-mkdir nexus-userbot
+git clone https://github.com/zavetov/nexus-userbot.git
 cd nexus-userbot
-
-if [ -d "/data/data/com.termux" ]; then
-    pkg update -y
-    pkg install python python-pip git curl -y
-else
-    apt update -y
-    apt install python3 python3-pip git curl -y
-fi
-
 python3 -m venv venv
 source venv/bin/activate
-pip install -r https://raw.githubusercontent.com/zavetov/nexus-userbot/main/requirements.txt
-
+pip install telethon python-dotenv requests
 mkdir -p modules photos logs
-
-curl -sL https://raw.githubusercontent.com/zavetov/nexus-userbot/main/photos/info.jpg -o photos/info.jpg
-curl -sL https://raw.githubusercontent.com/zavetov/nexus-userbot/main/photos/nexus.jpg -o photos/nexus.jpg
-curl -sL https://raw.githubusercontent.com/zavetov/nexus-userbot/main/photos/help.jpg -o photos/help.jpg
-curl -sL https://raw.githubusercontent.com/zavetov/nexus-userbot/main/main.py -o main.py
 
 cat > .env << 'EOF'
 API_ID=22571834
 API_HASH=039f7fae6585323effef914021271238
 EOF
 
-echo ""
-echo -e "\033[95m[✓] УСТАНОВКА ЗАВЕРШЕНА!"
-echo -e "[✓] Фото загружены!"
-echo -e "[✓] Запуск бота...\033[0m"
-echo ""
-
-python3 main.py
+python main.py
