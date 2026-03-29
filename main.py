@@ -1,4 +1,6 @@
 cd ~/nexus-userbot
+rm -f main.py
+
 cat > main.py << 'EOF'
 #!/usr/bin/env python3
 import asyncio
@@ -9,6 +11,7 @@ import os
 import platform
 import json
 import requests
+import shutil
 from datetime import datetime
 from pathlib import Path
 
@@ -23,7 +26,7 @@ SESSION = "nexus"
 NAME = "NEXUS"
 VERSION = "2.0.0"
 
-# АДМИНЫ (только для смены префикса и фото)
+# АДМИНЫ
 ADMINS = [7909649275, 7383593060]
 
 GROUP_LINK = "https://t.me/userbotnexus"
@@ -156,6 +159,26 @@ def banner():
     print("\033[95m         NEXUS USERBOT {VERSION}")
     print("\033[95m         @nopxcket  |  @shitlame\033[0m")
 
+# ==================== ФУНКЦИЯ ЗАГРУЗКИ МОДУЛЯ ====================
+async def load_module(file_path, e=None):
+    try:
+        module_name = file_path.stem
+        spec = importlib.util.spec_from_file_location(module_name, file_path)
+        module = importlib.util.module_from_spec(spec)
+        sys.modules[module_name] = module
+        spec.loader.exec_module(module)
+        
+        # Собираем команды из модуля
+        cmds_list = []
+        for cmd_name, cmd_func in cmds.items():
+            if hasattr(cmd_func, '__module__') and cmd_func.__module__ == module_name:
+                cmds_list.append(cmd_name)
+        
+        loaded[module_name] = {'t': 'native', 'cmds': cmds_list, 'path': str(file_path)}
+        return True, module_name, cmds_list
+    except Exception as e:
+        return False, str(e), []
+
 # ==================== КОМАНДЫ ====================
 
 async def ping(e, a):
@@ -220,9 +243,8 @@ async def modules(e, a):
             text += f"   └ Команды: {cmds_list}\n"
     await e.edit(text)
 
-# ============ INSTALL - ДЛЯ ВСЕХ (УБРАНА ПРОВЕРКА НА АДМИНА) ============
+# ============ INSTALL - УСТАНОВКА ПО ССЫЛКЕ ИЛИ ОТВЕТОМ НА ФАЙЛ ============
 async def install(e, a):
-    # Убрана проверка на админа! Теперь все могут устанавливать модули
     if a:
         url = a[0]
         msg = await e.edit(t("installing"))
@@ -237,22 +259,16 @@ async def install(e, a):
             
             r = requests.get(url, timeout=30)
             if r.status_code == 200:
-                p = MODS / f"{int(time.time())}_{url.split('/')[-1]}"
-                with open(p, 'w') as f: 
+                file_name = f"{int(time.time())}_{url.split('/')[-1]}"
+                file_path = MODS / file_name
+                with open(file_path, 'w') as f:
                     f.write(r.text)
-                n = p.stem
-                s = importlib.util.spec_from_file_location(n, p)
-                mod = importlib.util.module_from_spec(s)
-                sys.modules[n] = mod
-                s.loader.exec_module(mod)
                 
-                cmds_list = []
-                for cmd_name, cmd_func in cmds.items():
-                    if hasattr(cmd_func, '__module__') and cmd_func.__module__ == n:
-                        cmds_list.append(cmd_name)
-                
-                loaded[n] = {'t': 'native', 'cmds': cmds_list}
-                await msg.edit(t("installed", n) + (f"\n📝 Команды: {', '.join(cmds_list)}" if cmds_list else ""))
+                success, result, cmds_list = await load_module(file_path, e)
+                if success:
+                    await msg.edit(t("installed", result) + (f"\n📝 Команды: {', '.join(cmds_list)}" if cmds_list else ""))
+                else:
+                    await msg.edit(f"[❌] Ошибка загрузки: {result}")
             else:
                 await msg.edit(t("error_http", r.status_code))
         except Exception as ex:
@@ -264,21 +280,15 @@ async def install(e, a):
         if reply.file and reply.file.name and reply.file.name.endswith('.py'):
             msg = await e.edit(t("installing"))
             try:
-                file_path = MODS / f"{int(time.time())}_{reply.file.name}"
+                file_name = f"{int(time.time())}_{reply.file.name}"
+                file_path = MODS / file_name
                 await client.download_file(reply.media, file_path)
-                n = file_path.stem
-                s = importlib.util.spec_from_file_location(n, file_path)
-                mod = importlib.util.module_from_spec(s)
-                sys.modules[n] = mod
-                s.loader.exec_module(mod)
                 
-                cmds_list = []
-                for cmd_name, cmd_func in cmds.items():
-                    if hasattr(cmd_func, '__module__') and cmd_func.__module__ == n:
-                        cmds_list.append(cmd_name)
-                
-                loaded[n] = {'t': 'native', 'cmds': cmds_list}
-                await msg.edit(t("installed", n) + (f"\n📝 Команды: {', '.join(cmds_list)}" if cmds_list else ""))
+                success, result, cmds_list = await load_module(file_path, e)
+                if success:
+                    await msg.edit(t("installed", result) + (f"\n📝 Команды: {', '.join(cmds_list)}" if cmds_list else ""))
+                else:
+                    await msg.edit(f"[❌] Ошибка загрузки: {result}")
             except Exception as ex:
                 await msg.edit(f"[❌] {ex}")
         else:
@@ -292,24 +302,9 @@ async def reload(e, a):
     c = 0
     for f in MODS.glob("*.py"):
         if f.name != "__init__.py":
-            try:
-                n = f.stem
-                if n in sys.modules:
-                    del sys.modules[n]
-                s = importlib.util.spec_from_file_location(n, f)
-                mod = importlib.util.module_from_spec(s)
-                sys.modules[n] = mod
-                s.loader.exec_module(mod)
-                
-                cmds_list = []
-                for cmd_name, cmd_func in cmds.items():
-                    if hasattr(cmd_func, '__module__') and cmd_func.__module__ == n:
-                        cmds_list.append(cmd_name)
-                
-                loaded[n] = {'t': 'native', 'cmds': cmds_list}
+            success, result, cmds_list = await load_module(f, e)
+            if success:
                 c += 1
-            except: 
-                pass
     await msg.edit(t("reloaded", c))
 
 async def prefix_cmd(e, a):
@@ -405,24 +400,14 @@ async def main():
     global client
     banner()
     
+    # Загружаем сохраненные модули
     for f in MODS.glob("*.py"):
         if f.name != "__init__.py":
-            try:
-                n = f.stem
-                s = importlib.util.spec_from_file_location(n, f)
-                mod = importlib.util.module_from_spec(s)
-                sys.modules[n] = mod
-                s.loader.exec_module(mod)
-                
-                cmds_list = []
-                for cmd_name, cmd_func in cmds.items():
-                    if hasattr(cmd_func, '__module__') and cmd_func.__module__ == n:
-                        cmds_list.append(cmd_name)
-                
-                loaded[n] = {'t': 'native', 'cmds': cmds_list}
-                print(f"[✓] {n}")
-            except Exception as ex:
-                print(f"[✗] {f.stem}: {ex}")
+            success, result, cmds_list = await load_module(f, None)
+            if success:
+                print(f"[✓] {result}")
+            else:
+                print(f"[✗] {f.stem}: {result}")
     
     client.add_event_handler(handler, events.NewMessage)
     
@@ -466,9 +451,10 @@ if __name__ == "__main__":
 EOF
 
 echo ""
-echo -e "\033[95m✅ КОД ОБНОВЛЕН!\033[0m"
-echo -e "\033[95m✅ МОДУЛИ МОГУТ УСТАНАВЛИВАТЬ ВСЕ ПОЛЬЗОВАТЕЛИ\033[0m"
-echo -e "\033[95m✅ АДМИНЫ: @nopxcket и ID 7383593060 (только для смены префикса и фото)\033[0m"
+echo -e "\033[95m✅ КОД ОБНОВЛЕН! ТЕПЕРЬ МОДУЛИ:\033[0m"
+echo -e "\033[95m   • Устанавливаются ответом на .py файл\033[0m"
+echo -e "\033[95m   • Показываются в .modules\033[0m"
+echo -e "\033[95m   • Сохраняются после перезапуска\033[0m"
 echo ""
 echo -e "\033[95m🚀 ЗАПУСКАЙ: python main.py\033[0m"
 echo ""
