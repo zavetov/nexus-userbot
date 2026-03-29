@@ -120,7 +120,7 @@ def save_data():
 
 def get_photo_bytes(photo_name):
     photo_path = PHOTOS_DIR / f"{photo_name}.jpg"
-    if photo_path.exists():
+    if photo_path.exists() and photo_path.stat().st_size > 1000:
         with open(photo_path, 'rb') as f:
             return f.read()
     return None
@@ -165,7 +165,7 @@ async def info(e, a):
 {t("install_btn", GROUP_LINK)}"""
     photo_bytes = get_photo_bytes("info")
     if photo_bytes:
-        await client.send_file(e.chat_id, photo_bytes, caption=text, parse_mode='markdown')
+        await client.send_file(e.chat_id, photo_bytes, caption=text, parse_mode='markdown', force_document=False)
         await e.delete()
     else:
         await e.edit(text, parse_mode='markdown')
@@ -181,7 +181,7 @@ async def nexus(e, a):
 {t("install_btn", GROUP_LINK)}"""
     photo_bytes = get_photo_bytes("nexus")
     if photo_bytes:
-        await client.send_file(e.chat_id, photo_bytes, caption=text, parse_mode='markdown')
+        await client.send_file(e.chat_id, photo_bytes, caption=text, parse_mode='markdown', force_document=False)
         await e.delete()
     else:
         await e.edit(text, parse_mode='markdown')
@@ -339,7 +339,7 @@ async def help_cmd(e, a):
         current_prefix, current_prefix, current_prefix, current_prefix, current_prefix)
     photo_bytes = get_photo_bytes("help")
     if photo_bytes:
-        await client.send_file(e.chat_id, photo_bytes, caption=text)
+        await client.send_file(e.chat_id, photo_bytes, caption=text, force_document=False)
         await e.delete()
     else:
         await e.edit(text)
