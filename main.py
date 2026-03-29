@@ -1,7 +1,4 @@
-cd ~/nexus-userbot
-rm -f main.py
-
-cat > main.py << 'EOF'
+cd ~/nexus-userbot && rm -f main.py && cat > main.py << 'EOF'
 #!/usr/bin/env python3
 import asyncio
 import sys
@@ -10,23 +7,17 @@ import os
 import platform
 import json
 import requests
-from datetime import datetime
 from pathlib import Path
-
 from telethon import TelegramClient, events
 from telethon.errors import SessionPasswordNeededError
 
-# ==================== КОНФИГ ====================
 API_ID = int(os.getenv("API_ID", 0))
 API_HASH = os.getenv("API_HASH", "")
 PREFIX = "."
 SESSION = "nexus"
 NAME = "NEXUS"
 VERSION = "2.0.0"
-
-# АДМИНЫ
 ADMINS = [7909649275, 7383593060]
-
 GROUP_LINK = "https://t.me/userbotnexus"
 
 BASE = Path(__file__).parent
@@ -36,7 +27,6 @@ PHOTOS_DIR = BASE / "photos"
 MODS.mkdir(exist_ok=True)
 PHOTOS_DIR.mkdir(exist_ok=True)
 
-# ==================== ГЛОБАЛЬНЫЕ ПЕРЕМЕННЫЕ ====================
 client = None
 cmds = {}
 loaded = {}
@@ -44,7 +34,6 @@ start = time.time()
 current_prefix = PREFIX
 current_lang = "ru"
 
-# ==================== ТЕКСТЫ ====================
 TEXTS = {
     "ru": {
         "ping": "[🏓] Понг...",
@@ -114,7 +103,6 @@ def t(key, *args):
     text = TEXTS[current_lang].get(key, key)
     return text.format(*args) if args else text
 
-# ==================== ЗАГРУЗКА СОХРАНЕННЫХ ДАННЫХ ====================
 if DATA_FILE.exists():
     try:
         with open(DATA_FILE, 'r') as f:
@@ -131,7 +119,6 @@ def save_data():
     except:
         pass
 
-# ==================== ФУНКЦИИ ====================
 def get_photo_bytes(photo_name):
     photo_path = PHOTOS_DIR / f"{photo_name}.jpg"
     if photo_path.exists():
@@ -157,27 +144,6 @@ def banner():
     print("\033[95m         NEXUS USERBOT {VERSION}")
     print("\033[95m         @nopxcket  |  @shitlame\033[0m")
 
-# ==================== ЗАГРУЗКА МОДУЛЯ ====================
-async def load_module(file_path):
-    try:
-        module_name = file_path.stem
-        spec = importlib.util.spec_from_file_location(module_name, file_path)
-        module = importlib.util.module_from_spec(spec)
-        sys.modules[module_name] = module
-        spec.loader.exec_module(module)
-        
-        cmds_list = []
-        for cmd_name, cmd_func in cmds.items():
-            if hasattr(cmd_func, '__module__') and cmd_func.__module__ == module_name:
-                cmds_list.append(cmd_name)
-        
-        loaded[module_name] = {'t': 'native', 'cmds': cmds_list, 'path': str(file_path)}
-        return True, module_name, cmds_list
-    except Exception as e:
-        return False, str(e), []
-
-# ==================== КОМАНДЫ ====================
-
 async def ping(e, a):
     s = time.time()
     await e.edit(t("ping"))
@@ -190,18 +156,14 @@ async def info(e, a):
     uptime = get_uptime()
     s = time.time()
     ping_real = int((time.time() - s) * 1000)
-    
     text = f"""
 {t("you", username)}
 {t("version", VERSION)}
-
 {t("prefix", current_prefix)}
 {t("uptime", uptime)}
 {t("ping_stat", ping_real)}
 {t("system", platform.system())}
-
 {t("install_btn", GROUP_LINK)}"""
-    
     photo_bytes = get_photo_bytes("info")
     if photo_bytes:
         await client.send_file(e.chat_id, photo_bytes, caption=text, parse_mode='markdown')
@@ -216,11 +178,8 @@ async def nexus(e, a):
 {t("owner")}
 {t("you", username)}
 {t("nexus_title", VERSION)}
-
 {t("prefix", current_prefix)}
-
 {t("install_btn", GROUP_LINK)}"""
-    
     photo_bytes = get_photo_bytes("nexus")
     if photo_bytes:
         await client.send_file(e.chat_id, photo_bytes, caption=text, parse_mode='markdown')
@@ -252,25 +211,28 @@ async def install(e, a):
                     url = url.replace("github.com", "raw.githubusercontent.com")
                     if not url.endswith(".py"):
                         url = f"{url}/main/main.py"
-            
             r = requests.get(url, timeout=30)
             if r.status_code == 200:
                 file_name = f"{int(time.time())}_{url.split('/')[-1]}"
                 file_path = MODS / file_name
                 with open(file_path, 'w') as f:
                     f.write(r.text)
-                
-                success, result, cmds_list = await load_module(file_path)
-                if success:
-                    await msg.edit(t("installed", result) + (f"\n📝 Команды: {', '.join(cmds_list)}" if cmds_list else ""))
-                else:
-                    await msg.edit(f"[❌] Ошибка: {result}")
+                n = file_path.stem
+                spec = importlib.util.spec_from_file_location(n, file_path)
+                mod = importlib.util.module_from_spec(spec)
+                sys.modules[n] = mod
+                spec.loader.exec_module(mod)
+                cmds_list = []
+                for cmd_name, cmd_func in cmds.items():
+                    if hasattr(cmd_func, '__module__') and cmd_func.__module__ == n:
+                        cmds_list.append(cmd_name)
+                loaded[n] = {'t': 'native', 'cmds': cmds_list}
+                await msg.edit(t("installed", n) + (f"\n📝 Команды: {', '.join(cmds_list)}" if cmds_list else ""))
             else:
                 await msg.edit(t("error_http", r.status_code))
         except Exception as ex:
             await msg.edit(f"[❌] {ex}")
         return
-    
     if e.is_reply:
         reply = await e.get_reply_message()
         if reply.file and reply.file.name and reply.file.name.endswith('.py'):
@@ -279,12 +241,17 @@ async def install(e, a):
                 file_name = f"{int(time.time())}_{reply.file.name}"
                 file_path = MODS / file_name
                 await client.download_file(reply.media, file_path)
-                
-                success, result, cmds_list = await load_module(file_path)
-                if success:
-                    await msg.edit(t("installed", result) + (f"\n📝 Команды: {', '.join(cmds_list)}" if cmds_list else ""))
-                else:
-                    await msg.edit(f"[❌] Ошибка: {result}")
+                n = file_path.stem
+                spec = importlib.util.spec_from_file_location(n, file_path)
+                mod = importlib.util.module_from_spec(spec)
+                sys.modules[n] = mod
+                spec.loader.exec_module(mod)
+                cmds_list = []
+                for cmd_name, cmd_func in cmds.items():
+                    if hasattr(cmd_func, '__module__') and cmd_func.__module__ == n:
+                        cmds_list.append(cmd_name)
+                loaded[n] = {'t': 'native', 'cmds': cmds_list}
+                await msg.edit(t("installed", n) + (f"\n📝 Команды: {', '.join(cmds_list)}" if cmds_list else ""))
             except Exception as ex:
                 await msg.edit(f"[❌] {ex}")
         else:
@@ -298,9 +265,22 @@ async def reload(e, a):
     c = 0
     for f in MODS.glob("*.py"):
         if f.name != "__init__.py":
-            success, result, cmds_list = await load_module(f)
-            if success:
+            try:
+                n = f.stem
+                if n in sys.modules:
+                    del sys.modules[n]
+                spec = importlib.util.spec_from_file_location(n, f)
+                mod = importlib.util.module_from_spec(spec)
+                sys.modules[n] = mod
+                spec.loader.exec_module(mod)
+                cmds_list = []
+                for cmd_name, cmd_func in cmds.items():
+                    if hasattr(cmd_func, '__module__') and cmd_func.__module__ == n:
+                        cmds_list.append(cmd_name)
+                loaded[n] = {'t': 'native', 'cmds': cmds_list}
                 c += 1
+            except:
+                pass
     await msg.edit(t("reloaded", c))
 
 async def prefix_cmd(e, a):
@@ -358,7 +338,6 @@ async def help_cmd(e, a):
     text = t("help_title", VERSION, username) + "\n\n" + t("commands", 
         current_prefix, current_prefix, current_prefix, current_prefix, 
         current_prefix, current_prefix, current_prefix, current_prefix, current_prefix)
-    
     photo_bytes = get_photo_bytes("help")
     if photo_bytes:
         await client.send_file(e.chat_id, photo_bytes, caption=text)
@@ -366,7 +345,6 @@ async def help_cmd(e, a):
     else:
         await e.edit(text)
 
-# ==================== РЕГИСТРАЦИЯ ====================
 cmds['ping'] = ping
 cmds['info'] = info
 cmds['nexus'] = nexus
@@ -378,10 +356,9 @@ cmds['language'] = language_cmd
 cmds['sendphoto'] = sendphoto_cmd
 cmds['help'] = help_cmd
 
-# ==================== ОБРАБОТЧИК ====================
 async def handler(e):
     t = e.raw_text
-    if not t.startswith(current_prefix): 
+    if not t.startswith(current_prefix):
         return
     p = t.split()
     c = p[0][len(current_prefix):].lower()
@@ -395,17 +372,23 @@ async def handler(e):
 async def main():
     global client
     banner()
-    
     for f in MODS.glob("*.py"):
         if f.name != "__init__.py":
-            success, result, cmds_list = await load_module(f)
-            if success:
-                print(f"[✓] {result}")
-            else:
-                print(f"[✗] {f.stem}: {result}")
-    
+            try:
+                n = f.stem
+                spec = importlib.util.spec_from_file_location(n, f)
+                mod = importlib.util.module_from_spec(spec)
+                sys.modules[n] = mod
+                spec.loader.exec_module(mod)
+                cmds_list = []
+                for cmd_name, cmd_func in cmds.items():
+                    if hasattr(cmd_func, '__module__') and cmd_func.__module__ == n:
+                        cmds_list.append(cmd_name)
+                loaded[n] = {'t': 'native', 'cmds': cmds_list}
+                print(f"[✓] {n}")
+            except Exception as ex:
+                print(f"[✗] {f.stem}: {ex}")
     client.add_event_handler(handler, events.NewMessage)
-    
     print(f"\n\033[95m[✓] NEXUS STARTED! {len(cmds)} commands, {len(loaded)} modules\033[0m")
     print(f"\033[95m[✓] {current_prefix}help\033[0m\n")
     await client.run_until_disconnected()
@@ -419,22 +402,17 @@ if __name__ == "__main__":
                     if '=' in l and not l.startswith('#'):
                         k, v = l.strip().split('=', 1)
                         os.environ[k] = v
-        
         API_ID = int(os.getenv("API_ID", 0))
         API_HASH = os.getenv("API_HASH", "")
-        
         if not API_ID or not API_HASH:
             print("[!] No API keys!")
             print("[!] Create .env file")
             sys.exit(1)
-        
         print("[*] Connecting...")
         client = TelegramClient(SESSION, API_ID, API_HASH)
         client.start()
         print("\033[95m[✓] NEXUS STARTED!\033[0m\n")
-        
         asyncio.get_event_loop().run_until_complete(main())
-        
     except SessionPasswordNeededError:
         pwd = input("2FA: ")
         client.sign_in(password=pwd)
@@ -446,7 +424,7 @@ if __name__ == "__main__":
 EOF
 
 echo ""
-echo -e "\033[95m✅ main.py ИСПРАВЛЕН! ТЕПЕРЬ ЗАПУСКАЙ:\033[0m"
+echo -e "\033[92m✅ main.py ИСПРАВЛЕН! ТЕПЕРЬ ЗАПУСКАЙ:\033[0m"
 echo ""
 
 python main.py
