@@ -1,4 +1,3 @@
-cat > main.py << 'EOF'
 #!/usr/bin/env python3
 import asyncio
 import sys
@@ -421,4 +420,3 @@ if __name__ == "__main__":
         print("\n[!] Stopping...")
     except Exception as e:
         print(f"[✗] {e}")
-EOF
