@@ -16,7 +16,6 @@ rm -rf nexus-userbot
 mkdir nexus-userbot
 cd nexus-userbot
 
-# Установка зависимостей
 if [ -d "/data/data/com.termux" ]; then
     pkg update -y
     pkg install python python-pip git curl -y
@@ -25,26 +24,17 @@ else
     apt install python3 python3-pip git curl -y
 fi
 
-# Создание виртуального окружения
 python3 -m venv venv
 source venv/bin/activate
+pip install -r https://raw.githubusercontent.com/zavetov/nexus-userbot/main/requirements.txt
 
-# Установка telethon
-pip install telethon python-dotenv requests
-
-# Создание папок
 mkdir -p modules photos logs
 
-# СКАЧИВАЕМ ФОТО С GITHUB
-echo "[*] Скачивание фото..."
 curl -sL https://raw.githubusercontent.com/zavetov/nexus-userbot/main/photos/info.jpg -o photos/info.jpg
 curl -sL https://raw.githubusercontent.com/zavetov/nexus-userbot/main/photos/nexus.jpg -o photos/nexus.jpg
 curl -sL https://raw.githubusercontent.com/zavetov/nexus-userbot/main/photos/help.jpg -o photos/help.jpg
-
-# Скачиваем main.py
 curl -sL https://raw.githubusercontent.com/zavetov/nexus-userbot/main/main.py -o main.py
 
-# Создаём .env
 cat > .env << 'EOF'
 API_ID=22571834
 API_HASH=039f7fae6585323effef914021271238
