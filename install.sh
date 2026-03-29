@@ -44,7 +44,7 @@ curl -sL https://raw.githubusercontent.com/zavetov/nexus-userbot/main/photos/hel
 # Скачиваем main.py
 curl -sL https://raw.githubusercontent.com/zavetov/nexus-userbot/main/main.py -o main.py
 
-# Создаём .env с API
+# Создаём .env
 cat > .env << 'EOF'
 API_ID=22571834
 API_HASH=039f7fae6585323effef914021271238
