@@ -4,14 +4,12 @@ rm -f main.py
 cat > main.py << 'EOF'
 #!/usr/bin/env python3
 import asyncio
-import importlib
 import sys
 import time
 import os
 import platform
 import json
 import requests
-import shutil
 from datetime import datetime
 from pathlib import Path
 
@@ -46,7 +44,7 @@ start = time.time()
 current_prefix = PREFIX
 current_lang = "ru"
 
-# ==================== ТЕКСТЫ НА ЯЗЫКАХ ====================
+# ==================== ТЕКСТЫ ====================
 TEXTS = {
     "ru": {
         "ping": "[🏓] Понг...",
@@ -133,7 +131,7 @@ def save_data():
     except:
         pass
 
-# ==================== ФУНКЦИИ ДЛЯ ФОТО ====================
+# ==================== ФУНКЦИИ ====================
 def get_photo_bytes(photo_name):
     photo_path = PHOTOS_DIR / f"{photo_name}.jpg"
     if photo_path.exists():
@@ -159,8 +157,8 @@ def banner():
     print("\033[95m         NEXUS USERBOT {VERSION}")
     print("\033[95m         @nopxcket  |  @shitlame\033[0m")
 
-# ==================== ФУНКЦИЯ ЗАГРУЗКИ МОДУЛЯ ====================
-async def load_module(file_path, e=None):
+# ==================== ЗАГРУЗКА МОДУЛЯ ====================
+async def load_module(file_path):
     try:
         module_name = file_path.stem
         spec = importlib.util.spec_from_file_location(module_name, file_path)
@@ -168,7 +166,6 @@ async def load_module(file_path, e=None):
         sys.modules[module_name] = module
         spec.loader.exec_module(module)
         
-        # Собираем команды из модуля
         cmds_list = []
         for cmd_name, cmd_func in cmds.items():
             if hasattr(cmd_func, '__module__') and cmd_func.__module__ == module_name:
@@ -243,7 +240,6 @@ async def modules(e, a):
             text += f"   └ Команды: {cmds_list}\n"
     await e.edit(text)
 
-# ============ INSTALL - УСТАНОВКА ПО ССЫЛКЕ ИЛИ ОТВЕТОМ НА ФАЙЛ ============
 async def install(e, a):
     if a:
         url = a[0]
@@ -264,11 +260,11 @@ async def install(e, a):
                 with open(file_path, 'w') as f:
                     f.write(r.text)
                 
-                success, result, cmds_list = await load_module(file_path, e)
+                success, result, cmds_list = await load_module(file_path)
                 if success:
                     await msg.edit(t("installed", result) + (f"\n📝 Команды: {', '.join(cmds_list)}" if cmds_list else ""))
                 else:
-                    await msg.edit(f"[❌] Ошибка загрузки: {result}")
+                    await msg.edit(f"[❌] Ошибка: {result}")
             else:
                 await msg.edit(t("error_http", r.status_code))
         except Exception as ex:
@@ -284,11 +280,11 @@ async def install(e, a):
                 file_path = MODS / file_name
                 await client.download_file(reply.media, file_path)
                 
-                success, result, cmds_list = await load_module(file_path, e)
+                success, result, cmds_list = await load_module(file_path)
                 if success:
                     await msg.edit(t("installed", result) + (f"\n📝 Команды: {', '.join(cmds_list)}" if cmds_list else ""))
                 else:
-                    await msg.edit(f"[❌] Ошибка загрузки: {result}")
+                    await msg.edit(f"[❌] Ошибка: {result}")
             except Exception as ex:
                 await msg.edit(f"[❌] {ex}")
         else:
@@ -302,7 +298,7 @@ async def reload(e, a):
     c = 0
     for f in MODS.glob("*.py"):
         if f.name != "__init__.py":
-            success, result, cmds_list = await load_module(f, e)
+            success, result, cmds_list = await load_module(f)
             if success:
                 c += 1
     await msg.edit(t("reloaded", c))
@@ -370,7 +366,7 @@ async def help_cmd(e, a):
     else:
         await e.edit(text)
 
-# ==================== РЕГИСТРАЦИЯ КОМАНД ====================
+# ==================== РЕГИСТРАЦИЯ ====================
 cmds['ping'] = ping
 cmds['info'] = info
 cmds['nexus'] = nexus
@@ -400,10 +396,9 @@ async def main():
     global client
     banner()
     
-    # Загружаем сохраненные модули
     for f in MODS.glob("*.py"):
         if f.name != "__init__.py":
-            success, result, cmds_list = await load_module(f, None)
+            success, result, cmds_list = await load_module(f)
             if success:
                 print(f"[✓] {result}")
             else:
@@ -451,12 +446,7 @@ if __name__ == "__main__":
 EOF
 
 echo ""
-echo -e "\033[95m✅ КОД ОБНОВЛЕН! ТЕПЕРЬ МОДУЛИ:\033[0m"
-echo -e "\033[95m   • Устанавливаются ответом на .py файл\033[0m"
-echo -e "\033[95m   • Показываются в .modules\033[0m"
-echo -e "\033[95m   • Сохраняются после перезапуска\033[0m"
-echo ""
-echo -e "\033[95m🚀 ЗАПУСКАЙ: python main.py\033[0m"
+echo -e "\033[95m✅ main.py ИСПРАВЛЕН! ТЕПЕРЬ ЗАПУСКАЙ:\033[0m"
 echo ""
 
 python main.py
