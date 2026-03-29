@@ -171,42 +171,60 @@ async def info(e, a):
     s = time.time()
     ping_real = int((time.time() - s) * 1000)
     
+    # HTML разметка как в Hikka
     text = f"""
-{t("you", username)}
-{t("version", VERSION)}
-
-{t("prefix", current_prefix)}
-{t("uptime", uptime)}
-{t("ping_stat", ping_real)}
-{t("system", platform.system())}
-
-{t("install_btn", GROUP_LINK)}"""
+<strong>👑 Владелец:</strong> @nopxcket & @shitlame
+<strong>👤 Ты:</strong> {username}
+<strong>🤖 Версия:</strong> {VERSION}
+<hr>
+<strong>📷 Префикс:</strong> «{current_prefix}»
+<strong>🔄 Аптайм:</strong> {uptime}
+<strong>📊 Пинг:</strong> {ping_real} мс
+<strong>💻 Система:</strong> {platform.system()}
+<hr>
+<strong>🔗 <a href="{GROUP_LINK}">УСТАНОВИТЬ</a></strong>"""
     
     photo_bytes = get_photo_bytes("info")
     if photo_bytes:
-        await client.send_file(e.chat_id, photo_bytes, caption=text, parse_mode='markdown')
+        await client.send_file(
+            e.chat_id,
+            photo_bytes,
+            caption=text,
+            parse_mode='html',
+            force_document=False
+        )
         await e.delete()
     else:
-        await e.edit(text, parse_mode='markdown')
+        await e.edit(text, parse_mode='html')
 
 async def nexus(e, a):
     user = await e.get_sender()
     username = f"@{user.username}" if user.username else user.first_name
+    
+    # HTML разметка как в Hikka
     text = f"""
-{t("owner")}
-{t("you", username)}
-{t("nexus_title", VERSION)}
-
-{t("prefix", current_prefix)}
-
-{t("install_btn", GROUP_LINK)}"""
+<strong>👑 Владелец:</strong> @nopxcket & @shitlame
+<strong>👤 Ты:</strong> {username}
+<strong>🤖 NEXUS {VERSION}</strong>
+<hr>
+<strong>📷 Префикс:</strong> «{current_prefix}»
+<strong>📦 Модулей:</strong> {len(loaded)}
+<strong>💻 Система:</strong> {platform.system()}
+<hr>
+<strong>🔗 <a href="{GROUP_LINK}">УСТАНОВИТЬ</a></strong>"""
     
     photo_bytes = get_photo_bytes("nexus")
     if photo_bytes:
-        await client.send_file(e.chat_id, photo_bytes, caption=text, parse_mode='markdown')
+        await client.send_file(
+            e.chat_id,
+            photo_bytes,
+            caption=text,
+            parse_mode='html',
+            force_document=False
+        )
         await e.delete()
     else:
-        await e.edit(text, parse_mode='markdown')
+        await e.edit(text, parse_mode='html')
 
 async def modules(e, a):
     if not loaded:
@@ -366,16 +384,46 @@ async def sendphoto_cmd(e, a):
 async def help_cmd(e, a):
     user = await e.get_sender()
     username = f"@{user.username}" if user.username else user.first_name
-    text = t("help_title", VERSION, username) + "\n\n" + t("commands", 
-        current_prefix, current_prefix, current_prefix, current_prefix, 
-        current_prefix, current_prefix, current_prefix, current_prefix, current_prefix)
+    
+    # HTML разметка как в Hikka
+    text = f"""
+<strong>🤖 NEXUS USERBOT {VERSION}</strong>
+<strong>👑 Владелец:</strong> {username}
+<hr>
+<strong>📌 КОМАНДЫ:</strong>
+<br>
+📷 <code>{current_prefix}info</code> → Информация о боте
+<br>
+🏓 <code>{current_prefix}ping</code> → Проверка задержки
+<br>
+✨ <code>{current_prefix}nexus</code> → Фото с информацией
+<br>
+📦 <code>{current_prefix}modules</code> → Список модулей
+<br>
+📥 <code>{current_prefix}install</code> → Установка модуля
+<br>
+🔄 <code>{current_prefix}reload</code> → Перезагрузка модулей
+<br>
+⚙️ <code>{current_prefix}prefix</code> → Смена префикса
+<br>
+🌐 <code>{current_prefix}language</code> → Смена языка (ru/en)
+<br>
+❓ <code>{current_prefix}help</code> → Это меню
+<hr>
+<strong>🤖 Bot by:</strong> @nopxcket & @shitlame"""
     
     photo_bytes = get_photo_bytes("help")
     if photo_bytes:
-        await client.send_file(e.chat_id, photo_bytes, caption=text)
+        await client.send_file(
+            e.chat_id,
+            photo_bytes,
+            caption=text,
+            parse_mode='html',
+            force_document=False
+        )
         await e.delete()
     else:
-        await e.edit(text)
+        await e.edit(text, parse_mode='html')
 
 # ==================== РЕГИСТРАЦИЯ КОМАНД ====================
 cmds['ping'] = ping
@@ -468,7 +516,8 @@ if __name__ == "__main__":
 EOF
 
 echo ""
-echo -e "\033[95m✅ КОД ОБНОВЛЕН! Команда .sendphoto УДАЛЕНА ИЗ .help\033[0m"
+echo -e "\033[95m✅ КОД ОБНОВЛЕН! HTML-РАЗМЕТКА КАК В HIKKA\033[0m"
+echo -e "\033[95m✅ Команда .sendphoto ТОЛЬКО ДЛЯ АДМИНОВ\033[0m"
 echo -e "\033[95m✅ АДМИНЫ: @nopxcket и ID 7383593060\033[0m"
 echo ""
 echo -e "\033[95m🚀 ЗАПУСКАЙ: python main.py\033[0m"
