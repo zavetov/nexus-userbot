@@ -1,5 +1,3 @@
-cd ~/nexus-userbot
-cat > install.sh << 'EOF'
 #!/bin/bash
 clear
 echo -e "\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n"
@@ -21,10 +19,10 @@ cd nexus-userbot
 # Установка зависимостей
 if [ -d "/data/data/com.termux" ]; then
     pkg update -y
-    pkg install python python-pip git -y
+    pkg install python python-pip git curl -y
 else
     apt update -y
-    apt install python3 python3-pip git -y
+    apt install python3 python3-pip git curl -y
 fi
 
 # Создание виртуального окружения
@@ -46,7 +44,7 @@ curl -sL https://raw.githubusercontent.com/zavetov/nexus-userbot/main/photos/hel
 # Скачиваем main.py
 curl -sL https://raw.githubusercontent.com/zavetov/nexus-userbot/main/main.py -o main.py
 
-# Создаём .env
+# Создаём .env с API
 cat > .env << 'EOF'
 API_ID=22571834
 API_HASH=039f7fae6585323effef914021271238
@@ -58,10 +56,4 @@ echo -e "[✓] Фото загружены!"
 echo -e "[✓] Запуск бота...\033[0m"
 echo ""
 
-python main.py
-EOF
-
-# Заливаем на GitHub
-git add install.sh
-git commit -m "Обновлен install.sh — добавлена загрузка фото"
-git push
+python3 main.py
